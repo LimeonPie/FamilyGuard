@@ -5,4 +5,13 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+
+    <string name="create_family">Create</string>
+    <string name="join_family">Join</string>
+    <string name="or">or</string>
+    <string name="credits">521147S, Mobile and Social Computing \n San Gunes and Ilya Minyaev</string>
+    <string name="family_name">Family name</string>
+    <string name="your_name">Your name</string>
+    <string name="key">Key</string>
+    <string name="join_description">Ask family owner to share your a private key</string>
 </resources>
