@@ -24,8 +24,14 @@
         <activity android:name=".JoinActivity" >
         </activity>
 
-        <activity android:name=".MainActivity">
+        <activity
+            android:name=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
         </activity>
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDmCdgeuNKYUppOrqA3l4tC-M1_VSe7t_U"/>
 
     </application>
 
