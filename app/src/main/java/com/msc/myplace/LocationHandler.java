@@ -99,8 +99,7 @@ public class LocationHandler extends IntentService implements
     }
 
     // Handle the newly received location
-    private void handleNewLocation(Location location_)
-    {
-        Log.d("LOCATION", location_.toString());
+    private void handleNewLocation(Location location) {
+        Client.updateSelf(this, location.getLatitude(), location.getLongitude());
     }
 }
