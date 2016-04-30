@@ -1,9 +1,11 @@
 package com.msc.myplace;
 
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
@@ -84,6 +86,10 @@ public class MainActivity extends AppCompatActivity
         mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
         mapHandler = new MapHandler();
         mapFragment.getMapAsync(mapHandler);
+
+        // Start the daemon to get the location of this device
+        startService(new Intent(this, LocationHandler.class));
+
         fetchFamily();
     }
 
