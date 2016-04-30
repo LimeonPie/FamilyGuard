@@ -9,6 +9,10 @@ public class Member {
     public String name;
     public String id;
 
+    public Member() {
+
+    }
+
     public Member(String name) {
         id = UUID.randomUUID().toString();
         this.name = name;

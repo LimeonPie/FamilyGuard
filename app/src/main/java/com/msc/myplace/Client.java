@@ -8,8 +8,13 @@ import android.os.Debug;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
+import com.firebase.client.ValueEventListener;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class Client extends IntentService {
@@ -17,6 +22,7 @@ public class Client extends IntentService {
     private Firebase db;
 
     public static final String ACTION_CREATE_FAMILY = "com.msc.myplace.action.CREATE_FAMILY";
+    public static final String ACTION_JOIN_FAMILY = "com.msc.myplace.action.JOIN_FAMILY";
 
     public static final String EXTRA_FAMILY_NAME = "com.msc.myplace.extra.FAMILY_NAME";
     public static final String EXTRA_USER_NAME = "com.msc.myplace.extra.USER_NAME";
@@ -36,20 +42,73 @@ public class Client extends IntentService {
         context.startService(intent);
     }
 
+    public static void joinFamily(Context context, String familyId, String userName) {
+        Intent intent = new Intent(context, Client.class);
+        intent.setAction(ACTION_JOIN_FAMILY);
+        intent.putExtra(EXTRA_FAMILY_ID, familyId);
+        intent.putExtra(EXTRA_USER_NAME, userName);
+        context.startService(intent);
+    }
+
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             final String action = intent.getAction();
             switch (action) {
                 case ACTION_CREATE_FAMILY:
-                    final String familyName = intent.getStringExtra(EXTRA_FAMILY_NAME);
-                    final String userName = intent.getStringExtra(EXTRA_USER_NAME);
-                    handleFamilyCreate(familyName, userName);
+                    String familyName = intent.getStringExtra(EXTRA_FAMILY_NAME);
+                    String creatorName = intent.getStringExtra(EXTRA_USER_NAME);
+                    handleFamilyCreate(familyName, creatorName);
+                    break;
+                case ACTION_JOIN_FAMILY:
+                    String familyId = intent.getStringExtra(EXTRA_FAMILY_ID);
+                    String userName = intent.getStringExtra(EXTRA_USER_NAME);
+                    handleFamilyJoin(familyId, userName);
                     break;
                 default:
                     break;
             }
         }
+    }
+
+    private void handleFamilyJoin(final String familyId, final String userName) {
+        db = new Firebase(FIREBASE);
+        final Firebase groups = db.child("groups");
+
+        ValueEventListener listener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot groupSnapshot: dataSnapshot.getChildren()) {
+                    Group group = groupSnapshot.getValue(Group.class);
+                    if (group.id.equals(familyId)) {
+                        // Adding new user
+                        Member user = new Member(userName);
+                        group.addMember(user);
+                        groups.child(group.id).setValue(group);
+
+                        Toast.makeText(getApplicationContext(), "Joined", Toast.LENGTH_SHORT).show();
+                        // We found existing family
+                        SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
+                        SharedPreferences.Editor editor = settings.edit();
+                        editor.putString(Constants.GROUP_ID, group.id);
+                        editor.commit();
+
+                        // Redirect to MainActivity
+                        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                        intent.setAction(Intent.ACTION_VIEW);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+                Log.e("Firebase", firebaseError.getMessage());
+            }
+        };
+
+        groups.addListenerForSingleValueEvent(listener);
     }
 
     private void handleFamilyCreate(String familyName, String userName) {
@@ -70,7 +129,7 @@ public class Client extends IntentService {
                     Log.e("Firebase", firebaseError.getMessage());
                 } else {
                     Log.i("Firebase", "Successfully created new group");
-
+                    Toast.makeText(getApplicationContext(), "Created", Toast.LENGTH_SHORT).show();
                     // Writing newly created family
                     SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
                     SharedPreferences.Editor editor = settings.edit();

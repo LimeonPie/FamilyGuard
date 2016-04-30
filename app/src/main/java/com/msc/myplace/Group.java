@@ -13,6 +13,10 @@ public class Group {
     public String familyName;
     public List<Member> members;
 
+    public Group() {
+
+    }
+
     public Group(String familyName) {
         id = UUID.randomUUID().toString();
         this.familyName = familyName;
