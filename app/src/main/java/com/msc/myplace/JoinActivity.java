@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class JoinActivity extends AppCompatActivity {
 
@@ -20,8 +21,8 @@ public class JoinActivity extends AppCompatActivity {
         userNameInput = (EditText) findViewById(R.id.joinNameInput);
     }
 
-    // Create Button event listener
-    // Open CreateActivity here
+    // Join button event listener
+    // Gather input data and try to join
     public void onJoinButtonClick(View v) {
 
         String key = keyInput.getText().toString();
@@ -31,7 +32,7 @@ public class JoinActivity extends AppCompatActivity {
             Client.joinFamily(this, key, userName);
         }
         else {
-
+            Toast.makeText(getApplicationContext(), "Fill the fields", Toast.LENGTH_SHORT).show();
         }
     }
 }

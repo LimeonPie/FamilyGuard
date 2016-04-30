@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class CreateActivity extends AppCompatActivity {
 
@@ -21,22 +22,18 @@ public class CreateActivity extends AppCompatActivity {
         userNameInput = (EditText) findViewById(R.id.creatorNameInput);
     }
 
-    // Create Button event listener
-    // Open CreateActivity here
+    // Create button event listener
+    // Gather input data and try to create a new family
     public void onCreateButtonClick(View v) {
 
         String familyName = familyNameInput.getText().toString();
         String userName = userNameInput.getText().toString();
 
         if (!familyName.isEmpty() && !userName.isEmpty()) {
-            // Create a new group
-            // And save to SharedPrefs
-
             Client.createNewFamily(this, familyName, userName);
-            // Need some sorta of callback when operation complete
-            // What I have in mind:
-            // To start a MainActivity when already have refs to family and current user
-            // In shared refs, or putting this info to extra when start an intent
+        }
+        else {
+            Toast.makeText(getApplicationContext(), "Fill the fields", Toast.LENGTH_SHORT).show();
         }
     }
 }

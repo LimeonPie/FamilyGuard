@@ -9,25 +9,23 @@ import com.firebase.client.Firebase;
 
 public class StartUp extends AppCompatActivity {
 
-    public SharedPreferences settings;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Firebase.setAndroidContext(this);
-        settings = getSharedPreferences(Constants.PREFS_NAME, 0);
         checkUser();
     }
 
     private void checkUser() {
+        SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
         String familyId = settings.getString(Constants.GROUP_ID, null);
-        /*if (familyId != null) {
+        if (familyId != null) {
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);
         }
-        else {*/
+        else {
             Intent intent = new Intent(this, EntryActivity.class);
             startActivity(intent);
-        //}
+        }
     }
 }

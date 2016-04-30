@@ -7,4 +7,5 @@ public class Constants {
     public static final String PREFS_NAME = "Settings";
 
     public static final String GROUP_ID = "groupId";
+    public static final String USER_ID = "userId";
 }
