@@ -20,13 +20,16 @@ public class Client extends IntentService {
     public static final String ACTION_JOIN_FAMILY = "com.msc.myplace.action.JOIN_FAMILY";
     public static final String ACTION_UPDATE_SELF = "com.msc.myplace.action.UPDATE_SELF";
     public static final String ACTION_FETCH_FAMILY = "com.msc.myplace.action.FETCH_FAMILY";
+    public static final String ACTION_FETCH_USER = "com.msc.myplace.action.FETCH_USER";
     public static final String ACTION_FAMILY_FETCHED = "com.msc.myplace.action.FAMILY_FETCHED";
+    public static final String ACTION_USER_FETCHED = "com.msc.myplace.action.USER_FETCHED";
 
     public static final String EXTRA_FAMILY_NAME = "com.msc.myplace.extra.FAMILY_NAME";
     public static final String EXTRA_GROUP = "com.msc.myplace.extra.GROUP";
     public static final String EXTRA_USER_NAME = "com.msc.myplace.extra.USER_NAME";
     public static final String EXTRA_FAMILY_ID = "com.msc.myplace.extra.FAMILY_ID";
     public static final String EXTRA_USER_ID = "com.msc.myplace.extra.USER_ID";
+    public static final String EXTRA_USER = "com.msc.myplace.extra.USER";
     public static final String EXTRA_LAT = "com.msc.myplace.extra.LAT";
     public static final String EXTRA_LNG = "com.msc.myplace.extra.LNG";
 
@@ -53,9 +56,24 @@ public class Client extends IntentService {
         context.startService(intent);
     }
 
+    public static void updateSelf(Context context, double lat, double lng) {
+        Intent intent = new Intent(context, Client.class);
+        intent.setAction(ACTION_UPDATE_SELF);
+        intent.putExtra(EXTRA_LAT, lat);
+        intent.putExtra(EXTRA_LNG, lng);
+        context.startService(intent);
+    }
+
     public static void fetchFamily(Context context) {
         Intent intent = new Intent(context, Client.class);
         intent.setAction(ACTION_FETCH_FAMILY);
+        context.startService(intent);
+    }
+
+    public static void fetchUser(Context context, String userId) {
+        Intent intent = new Intent(context, Client.class);
+        intent.setAction(ACTION_FETCH_USER);
+        intent.putExtra(EXTRA_USER_ID, userId);
         context.startService(intent);
     }
 
@@ -75,10 +93,16 @@ public class Client extends IntentService {
                     handleFamilyJoin(familyId, userName);
                     break;
                 case ACTION_UPDATE_SELF:
-                    handleUpdateSelf();
+                    double latitude = intent.getDoubleExtra(EXTRA_LAT, 0);
+                    double longitude = intent.getDoubleExtra(EXTRA_LNG, 0);
+                    handleUpdateSelf(latitude, longitude);
                     break;
                 case ACTION_FETCH_FAMILY:
                     handleFamilyFetch();
+                    break;
+                case ACTION_FETCH_USER:
+                    String userId = intent.getStringExtra(EXTRA_USER_ID);
+                    handleUserFetch(userId);
                     break;
                 default:
                     break;
@@ -86,8 +110,37 @@ public class Client extends IntentService {
         }
     }
 
-    private void handleUpdateSelf() {
+    private void handleUpdateSelf(final double lat, final double lng) {
+        db = new Firebase(FIREBASE);
+        String familyId = readPrefs(Constants.GROUP_ID);
+        final String userId = readPrefs(Constants.USER_ID);
+        final long time = System.currentTimeMillis();
+        if (familyId != null && userId != null) {
+            final Firebase family = db.child("groups").child(familyId);
+            ValueEventListener listener = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    DataSnapshot members = dataSnapshot.child("members");
+                    for (DataSnapshot memberData : members.getChildren()) {
+                        Member member = memberData.getValue(Member.class);
+                        if (member.id.equals(userId)) {
+                            // This is us
+                            member.lat = lat;
+                            member.lng = lng;
+                            member.lastUpdate = time;
+                            String key = memberData.getKey();
+                            family.child("members").child(key).setValue(member);
+                        }
+                    }
+                }
 
+                @Override
+                public void onCancelled(FirebaseError firebaseError) {
+                    Log.e("Firebase", firebaseError.getMessage());
+                }
+            };
+            family.addListenerForSingleValueEvent(listener);
+        }
     }
 
     private void handleFamilyFetch() {
@@ -113,7 +166,36 @@ public class Client extends IntentService {
             };
             family.addListenerForSingleValueEvent(listener);
         }
+    }
 
+    private void handleUserFetch(final String userId) {
+        db = new Firebase(FIREBASE);
+        String familyId = readPrefs(Constants.GROUP_ID);
+        if (familyId != null) {
+            final Firebase family = db.child("groups").child(familyId);
+            ValueEventListener listener = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    DataSnapshot members = dataSnapshot.child("members");
+                    for (DataSnapshot memberData : members.getChildren()) {
+                        Member member = memberData.getValue(Member.class);
+                        if (member.id.equals(userId)) {
+                            // This is us
+                            Intent intent = new Intent();
+                            intent.setAction(ACTION_USER_FETCHED);
+                            intent.putExtra(EXTRA_USER, member);
+                            sendBroadcast(intent);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(FirebaseError firebaseError) {
+                    Log.e("Firebase", firebaseError.getMessage());
+                }
+            };
+            family.addListenerForSingleValueEvent(listener);
+        }
     }
 
     private void handleFamilyJoin(final String familyId, final String userName) {

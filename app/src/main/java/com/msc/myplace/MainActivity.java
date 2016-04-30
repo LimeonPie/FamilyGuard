@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
@@ -33,6 +34,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.msc.myplace.R;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -40,6 +44,8 @@ public class MainActivity extends AppCompatActivity
     private MapHandler mapHandler;
     private Group family;
     private FloatingActionsMenu fabMenu;
+    private List<BroadcastReceiver> fabReceivers;
+
 
     // Wrapper for Google Maps
     private class MapHandler extends FragmentActivity
@@ -50,17 +56,18 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onMapReady(GoogleMap map) {
             googleMap = map;
-            CameraUpdate zoomIn = CameraUpdateFactory.zoomIn();
+            /*CameraUpdate zoomTo = CameraUpdateFactory.zoomTo(14f);
             googleMap.addMarker(new MarkerOptions()
                     .position(new LatLng(0, 0))
                     .title("Marker"));
-            googleMap.animateCamera(zoomIn);
+            googleMap.animateCamera(zoomTo);*/
         }
 
         // Move camera to certain location
         public void moveTo(double lat, double lng) {
             LatLng destination = new LatLng(lat, lng);
-            CameraUpdate moveVector = CameraUpdateFactory.newLatLng(destination);
+            CameraUpdate moveVector = CameraUpdateFactory.newLatLngZoom(destination, 14f);
+            googleMap.addMarker(new MarkerOptions().position(destination).title("I am here!"));
             googleMap.animateCamera(moveVector);
         }
     }
@@ -73,6 +80,7 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         fabMenu = (FloatingActionsMenu) findViewById(R.id.fab);
+        fabReceivers = new ArrayList<>(0);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -91,6 +99,7 @@ public class MainActivity extends AppCompatActivity
         startService(new Intent(this, LocationHandler.class));
 
         fetchFamily();
+        moveToMe();
     }
 
     private void fetchFamily() {
@@ -107,7 +116,7 @@ public class MainActivity extends AppCompatActivity
 
     private void buildFloatingButtons() {
         removeFabButtons();
-        for (Member member: family.members) {
+        for (final Member member: family.members) {
             FloatingActionButton fab = new FloatingActionButton(this);
             final String name = member.name;
             fab.setTitle(name);
@@ -118,18 +127,50 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void onClick(View v) {
                     Toast.makeText(getApplicationContext(), "Tap on " + name, Toast.LENGTH_SHORT).show();
+                    BroadcastReceiver callback = new BroadcastReceiver() {
+                        @Override
+                        public void onReceive(Context context, Intent intent) {
+                            Member user = (Member) intent.getSerializableExtra(Client.EXTRA_USER);
+                            mapHandler.moveTo(user.lat, user.lng);
+                        }
+                    };
+                    registerReceiver(callback, new IntentFilter(Client.ACTION_USER_FETCHED));
+                    Client.fetchUser(getApplicationContext(), member.id);
+                    fabReceivers.add(callback);
                 }
             });
             fabMenu.addButton(fab);
         }
     }
 
+    private void moveToMe() {
+        SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
+        String userId = settings.getString(Constants.USER_ID, null);
+        BroadcastReceiver callback = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Member user = (Member) intent.getSerializableExtra(Client.EXTRA_USER);
+                mapHandler.moveTo(user.lat, user.lng);
+                unregisterReceiver(this);
+            }
+        };
+        registerReceiver(callback, new IntentFilter(Client.ACTION_USER_FETCHED));
+        Client.fetchUser(getApplicationContext(), userId);
+    }
+
     private void removeFabButtons() {
         // There is no way to just delete all menu items
         // Try that, but it seems dangerous
+        unregisterFabReceivers();
         for (int i = 0; i < fabMenu.getChildCount(); i++) {
             FloatingActionButton fab = (FloatingActionButton) fabMenu.getChildAt(i);
             fabMenu.removeButton(fab);
+        }
+    }
+
+    private void unregisterFabReceivers() {
+        for (BroadcastReceiver receiver: fabReceivers) {
+            unregisterReceiver(receiver);
         }
     }
 
@@ -141,6 +182,12 @@ public class MainActivity extends AppCompatActivity
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        unregisterFabReceivers();
+        super.onDestroy();
     }
 
     @Override
