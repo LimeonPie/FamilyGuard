@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -175,6 +176,8 @@ public class MainActivity extends AppCompatActivity
             case R.id.familyMenuItem:
                 break;
             case R.id.locationsMenuItem:
+                Intent intent = new Intent(this, LocationsList.class);
+                startActivity(intent);
                 break;
             case R.id.settingsMenuItem:
                 break;
