@@ -333,6 +333,9 @@ public class Client extends IntentService {
                             Intent intent = new Intent();
                             intent.setAction(ACTION_LOCATION_CREATED);
                             sendBroadcast(intent);
+
+                            // Go back to the main activity
+                            openMainActivity();
                         }
                     }
                 }
