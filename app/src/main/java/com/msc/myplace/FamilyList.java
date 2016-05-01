@@ -15,6 +15,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class FamilyList extends AppCompatActivity {
 
@@ -45,7 +46,26 @@ public class FamilyList extends AppCompatActivity {
             v.setText(this.items.get(position).name);
             v = (TextView) row.findViewById(android.R.id.text2);
             // TODO location of the member should be added here
-            v.setText("Undefined location");
+            long current_time = Calendar.getInstance().getTimeInMillis();
+            // Milliseconds
+            double time_diff = current_time - this.items.get(position).lastUpdate;
+            // Convert to hours
+            time_diff = time_diff / 1000.0 / 60.0 / 60.0;
+            String clear_last_updated = "More than 10 hours ago";
+            if(time_diff < 1.0) {
+                clear_last_updated = (long)(time_diff * 60.0) + " minutes ago";
+            }
+            else if(time_diff < 10.0) {
+                clear_last_updated = (long)time_diff + " hours ago";
+            }
+            v.setText(
+                    this.items.get(position).lat +
+                    "," +
+                    this.items.get(position).lng +
+                    "  (" +
+                    clear_last_updated +
+                    ")"
+            );
             return row;
         }
     }
