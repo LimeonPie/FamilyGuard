@@ -221,6 +221,7 @@ public class MainActivity extends AppCompatActivity
                 startActivity( new Intent(this, LocationsList.class) );
                 break;
             case R.id.settingsMenuItem:
+                startActivity( new Intent(this, Settings.class) );
                 break;
             default:
                 break;
