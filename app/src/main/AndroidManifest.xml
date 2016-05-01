@@ -48,9 +48,13 @@
             android:name=".LocationHandler"
             android:exported="false" />
 
-        <activity android:name=".LocationsList" />
+        <activity
+            android:name=".LocationsList"
+            android:label="@string/locations"/>
 
-        <activity android:name=".CreateLocation"/>
+        <activity
+            android:name=".CreateLocation"
+            android:label="@string/location_create" />
 
     </application>
 
