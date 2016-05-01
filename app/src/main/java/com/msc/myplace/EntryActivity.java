@@ -23,7 +23,8 @@ public class EntryActivity extends AppCompatActivity {
         Window window = this.getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.setStatusBarColor(ContextCompat.getColor(context, R.color.colorPrimaryDark));
+        // TODO this causes problems on older phones, so disabling for now...
+        // window.setStatusBarColor(ContextCompat.getColor(context, R.color.colorPrimaryDark));
     }
 
     // Create Button event listener
