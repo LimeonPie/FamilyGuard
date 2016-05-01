@@ -15,7 +15,7 @@ import java.util.UUID;
 public class Group implements Serializable{
     public String id;
     public String familyName;
-    public List<Member> members;
+    public ArrayList<Member> members = new ArrayList<>(0);
 
     public Group() {
 

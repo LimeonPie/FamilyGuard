@@ -1,6 +1,9 @@
 package com.msc.myplace;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,6 +25,7 @@ public class LocationsList extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_locations_list);
         this.btn_add_location = (Button) findViewById(R.id.btn_add_location);
+
         this.btn_add_location.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -38,7 +42,24 @@ public class LocationsList extends AppCompatActivity {
         );
         this.list_view.setAdapter(this.adapter);
 
-        // Add the items here
-        this.adapter.add("lorem ipsum");
+        // Fetching locations
+        BroadcastReceiver callback = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                ArrayList<Location> locations = (ArrayList<Location>) intent.getSerializableExtra(Client.EXTRA_LOCATIONS_ALL);
+                updateListView(locations);
+                unregisterReceiver(this);
+            }
+        };
+        registerReceiver(callback, new IntentFilter(Client.ACTION_LOCATIONS_ALL_FETCHED));
+        Client.fetchLocationsAll(this);
+    }
+
+    private void updateListView(final ArrayList<Location> locations) {
+        if (locations != null && locations.size() > 0) {
+            for (Location location:locations) {
+                adapter.add(location.name);
+            }
+        }
     }
 }

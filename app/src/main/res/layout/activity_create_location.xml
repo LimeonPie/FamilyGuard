@@ -77,7 +77,7 @@
         android:layout_height="wrap_content"
         android:text="Add Location"
         android:id="@+id/btn_create_location"
-        android:layout_below="@+id/txt_radius"
+        android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
 
     <TextView
@@ -90,4 +90,12 @@
         android:layout_alignParentStart="true"
         android:layout_alignBottom="@+id/txt_location_name"
         android:layout_toStartOf="@+id/btn_create_location" />
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/assignedListView"
+        android:layout_below="@+id/txt_radius"
+        android:layout_alignParentStart="true"
+        android:layout_above="@+id/btn_create_location" />
 </RelativeLayout>

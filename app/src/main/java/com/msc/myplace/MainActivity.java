@@ -5,12 +5,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -20,7 +17,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.getbase.floatingactionbutton.FloatingActionButton;
@@ -33,7 +30,6 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.msc.myplace.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,11 +53,6 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onMapReady(GoogleMap map) {
             googleMap = map;
-            /*CameraUpdate zoomTo = CameraUpdateFactory.zoomTo(14f);
-            googleMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(0, 0))
-                    .title("Marker"));
-            googleMap.animateCamera(zoomTo);*/
         }
 
         // Move camera to certain location
@@ -96,10 +87,13 @@ public class MainActivity extends AppCompatActivity
         mapHandler = new MapHandler();
         mapFragment.getMapAsync(mapHandler);
 
+        // Firstly fetch family
+        fetchFamily();
+
         // Start the daemon to get the location of this device
         startService(new Intent(this, LocationHandler.class));
 
-        fetchFamily();
+        // Move to user's location
         moveToMe();
     }
 
@@ -107,8 +101,10 @@ public class MainActivity extends AppCompatActivity
         BroadcastReceiver callback = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                family = (Group) intent.getSerializableExtra(Client.EXTRA_GROUP);
+                family = (Group) intent.getSerializableExtra(Client.EXTRA_FAMILY);
                 buildFloatingButtons();
+                updateNavBar();
+                unregisterReceiver(this);
             }
         };
         registerReceiver(callback, new IntentFilter(Client.ACTION_FAMILY_FETCHED));
@@ -141,6 +137,19 @@ public class MainActivity extends AppCompatActivity
                 }
             });
             fabMenu.addButton(fab);
+        }
+    }
+
+    private void updateNavBar() {
+        TextView familyNameView = (TextView) findViewById(R.id.navBarFamilyName);
+        familyNameView.setText(family.familyName);
+        SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
+        String userId = settings.getString(Constants.USER_ID, null);
+        for (Member member : family.members) {
+            if (member.id.equals(userId)) {
+                TextView userNameView = (TextView) findViewById(R.id.navBarUserName);
+                userNameView.setText(member.name);
+            }
         }
     }
 

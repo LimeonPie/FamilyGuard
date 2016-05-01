@@ -12,26 +12,43 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 
+import java.util.ArrayList;
+
 public class Client extends IntentService {
 
     private Firebase db;
 
     public static final String ACTION_CREATE_FAMILY = "com.msc.myplace.action.CREATE_FAMILY";
+    public static final String ACTION_CREATE_LOCATION = "com.msc.myplace.action.CREATE_LOCATION";
     public static final String ACTION_JOIN_FAMILY = "com.msc.myplace.action.JOIN_FAMILY";
     public static final String ACTION_UPDATE_SELF = "com.msc.myplace.action.UPDATE_SELF";
+
     public static final String ACTION_FETCH_FAMILY = "com.msc.myplace.action.FETCH_FAMILY";
     public static final String ACTION_FETCH_USER = "com.msc.myplace.action.FETCH_USER";
+    public static final String ACTION_FETCH_LOCATIONS_ALL = "com.msc.myplace.action.FETCH_LOCATIONS_ALL";
+
     public static final String ACTION_FAMILY_FETCHED = "com.msc.myplace.action.FAMILY_FETCHED";
     public static final String ACTION_USER_FETCHED = "com.msc.myplace.action.USER_FETCHED";
+    public static final String ACTION_LOCATIONS_ALL_FETCHED = "com.msc.myplace.action.LOCATIONS_ALL_FETCHED";
+    public static final String ACTION_LOCATION_CREATED = "com.msc.myplace.action.LOCATION_CREATED";
 
+    public static final String EXTRA_LOCATIONS_ALL = "com.msc.myplace.extra.LOCATIONS_ALL";
+    public static final String EXTRA_LOCATION = "com.msc.myplace.extra.LOCATION";
+    public static final String EXTRA_LOCATION_NAME = "com.msc.myplace.extra.LOCATION_NAME";
+    public static final String EXTRA_LOCATION_ID = "com.msc.myplace.extra.LOCATION_ID";
+    public static final String EXTRA_LOCATION_ASSIGNED = "com.msc.myplace.extra.LOCATION_ASSIGNED";
+
+    public static final String EXTRA_FAMILY = "com.msc.myplace.extra.FAMILY";
     public static final String EXTRA_FAMILY_NAME = "com.msc.myplace.extra.FAMILY_NAME";
-    public static final String EXTRA_GROUP = "com.msc.myplace.extra.GROUP";
-    public static final String EXTRA_USER_NAME = "com.msc.myplace.extra.USER_NAME";
     public static final String EXTRA_FAMILY_ID = "com.msc.myplace.extra.FAMILY_ID";
-    public static final String EXTRA_USER_ID = "com.msc.myplace.extra.USER_ID";
+
     public static final String EXTRA_USER = "com.msc.myplace.extra.USER";
+    public static final String EXTRA_USER_NAME = "com.msc.myplace.extra.USER_NAME";
+    public static final String EXTRA_USER_ID = "com.msc.myplace.extra.USER_ID";
+
     public static final String EXTRA_LAT = "com.msc.myplace.extra.LAT";
     public static final String EXTRA_LNG = "com.msc.myplace.extra.LNG";
+    public static final String EXTRA_RADIUS = "com.msc.myplace.extra.RADIUS";
 
 
     public static final String FIREBASE = "https://myplacem.firebaseio.com/";
@@ -48,6 +65,17 @@ public class Client extends IntentService {
         context.startService(intent);
     }
 
+    public static void createNewLocation(Context context, String locationName, double lat, double lng, double radius, ArrayList<String> userIds) {
+        Intent intent = new Intent(context, Client.class);
+        intent.setAction(ACTION_CREATE_LOCATION);
+        intent.putExtra(EXTRA_LOCATION_NAME, locationName);
+        intent.putExtra(EXTRA_LAT, lat);
+        intent.putExtra(EXTRA_LNG, lng);
+        intent.putExtra(EXTRA_RADIUS, radius);
+        intent.putExtra(EXTRA_LOCATION_ASSIGNED, userIds);
+        context.startService(intent);
+    }
+
     public static void joinFamily(Context context, String familyId, String userName) {
         Intent intent = new Intent(context, Client.class);
         intent.setAction(ACTION_JOIN_FAMILY);
@@ -61,6 +89,12 @@ public class Client extends IntentService {
         intent.setAction(ACTION_UPDATE_SELF);
         intent.putExtra(EXTRA_LAT, lat);
         intent.putExtra(EXTRA_LNG, lng);
+        context.startService(intent);
+    }
+
+    public static void fetchLocationsAll(Context context) {
+        Intent intent = new Intent(context, Client.class);
+        intent.setAction(ACTION_FETCH_LOCATIONS_ALL);
         context.startService(intent);
     }
 
@@ -87,6 +121,14 @@ public class Client extends IntentService {
                     String creatorName = intent.getStringExtra(EXTRA_USER_NAME);
                     handleFamilyCreate(familyName, creatorName);
                     break;
+                case ACTION_CREATE_LOCATION:
+                    String locationName = intent.getStringExtra(EXTRA_LOCATION_NAME);
+                    double locLat = intent.getDoubleExtra(EXTRA_LAT, 0);
+                    double locLng = intent.getDoubleExtra(EXTRA_LNG, 0);
+                    double radius = intent.getDoubleExtra(EXTRA_RADIUS, 0);
+                    ArrayList<String> ids = intent.getStringArrayListExtra(EXTRA_LOCATION_ASSIGNED);
+                    handleLocationCreate(locationName, locLat, locLng, radius, ids);
+                    break;
                 case ACTION_JOIN_FAMILY:
                     String familyId = intent.getStringExtra(EXTRA_FAMILY_ID);
                     String userName = intent.getStringExtra(EXTRA_USER_NAME);
@@ -104,6 +146,8 @@ public class Client extends IntentService {
                     String userId = intent.getStringExtra(EXTRA_USER_ID);
                     handleUserFetch(userId);
                     break;
+                case ACTION_FETCH_LOCATIONS_ALL:
+                    handleLocationsFetch();
                 default:
                     break;
             }
@@ -125,11 +169,44 @@ public class Client extends IntentService {
                         Member member = memberData.getValue(Member.class);
                         if (member.id.equals(userId)) {
                             // This is us
-                            member.lat = lat;
-                            member.lng = lng;
-                            member.lastUpdate = time;
+                            // Update only user's locations fields
                             String key = memberData.getKey();
-                            family.child("members").child(key).setValue(member);
+                            family.child("members").child(key).child("lat").setValue(lat);
+                            family.child("members").child(key).child("lng").setValue(lng);
+                            family.child("members").child(key).child("lastUpdate").setValue(time);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(FirebaseError firebaseError) {
+                    Log.e("Firebase", firebaseError.getMessage());
+                }
+            };
+            family.addListenerForSingleValueEvent(listener);
+        }
+    }
+
+    private void handleLocationsFetch() {
+        db = new Firebase(FIREBASE);
+        String familyId = readPrefs(Constants.GROUP_ID);
+        final String userId = readPrefs(Constants.USER_ID);
+        if (familyId != null && userId != null) {
+            final Firebase family = db.child("groups").child(familyId);
+            ValueEventListener listener = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    DataSnapshot members = dataSnapshot.child("members");
+                    for (DataSnapshot memberData : members.getChildren()) {
+                        Member member = memberData.getValue(Member.class);
+                        if (member.id.equals(userId)) {
+                            // Here is out guy
+                            if (member.locations != null && member.locations.size() > 0) {
+                                Intent intent = new Intent();
+                                intent.setAction(ACTION_LOCATIONS_ALL_FETCHED);
+                                intent.putExtra(EXTRA_LOCATIONS_ALL, member.locations);
+                                sendBroadcast(intent);
+                            }
                         }
                     }
                 }
@@ -152,10 +229,9 @@ public class Client extends IntentService {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     Group group = dataSnapshot.getValue(Group.class);
-                    Log.d("Firebase", "Received data");
                     Intent intent = new Intent();
                     intent.setAction(ACTION_FAMILY_FETCHED);
-                    intent.putExtra(EXTRA_GROUP, group);
+                    intent.putExtra(EXTRA_FAMILY, group);
                     sendBroadcast(intent);
                 }
 
@@ -201,7 +277,6 @@ public class Client extends IntentService {
     private void handleFamilyJoin(final String familyId, final String userName) {
         db = new Firebase(FIREBASE);
         final Firebase groups = db.child("groups");
-
         ValueEventListener listener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -211,9 +286,10 @@ public class Client extends IntentService {
                         // Adding new user
                         Member user = new Member(userName);
                         group.addMember(user);
-                        groups.child(group.id).setValue(group);
+                        groups.child(familyId).child("members").setValue(group.members);
 
                         Toast.makeText(getApplicationContext(), "Joined a Family", Toast.LENGTH_SHORT).show();
+
                         writePrefs(Constants.GROUP_ID, group.id);
                         writePrefs(Constants.USER_ID, user.id);
                         openMainActivity();
@@ -230,9 +306,48 @@ public class Client extends IntentService {
         groups.addListenerForSingleValueEvent(listener);
     }
 
+    private void handleLocationCreate(final String locationName, final double lat, final double lng, final double radius, final ArrayList<String> userIds) {
+        db = new Firebase(FIREBASE);
+        String familyId = readPrefs(Constants.GROUP_ID);
+        final String userId = readPrefs(Constants.USER_ID);
+        if (familyId != null && userId != null) {
+            final Firebase family = db.child("groups").child(familyId);
+            ValueEventListener listener = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    DataSnapshot members = dataSnapshot.child("members");
+                    for (DataSnapshot memberData : members.getChildren()) {
+                        Member member = memberData.getValue(Member.class);
+                        if (member.id.equals(userId)) {
+                            // This is us
+                            // Firstly, create new Location
+                            Location created = new Location(locationName, lat, lng, radius);
+                            created.assigned = userIds;
+                            // Add to temporal copy a new location
+                            member.addLocation(created);
+                            // Update only locations
+                            String key = memberData.getKey();
+                            family.child("members").child(key).child("locations").setValue(member.locations);
+
+                            // Send a signal that new location created and added
+                            Intent intent = new Intent();
+                            intent.setAction(ACTION_LOCATION_CREATED);
+                            sendBroadcast(intent);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(FirebaseError firebaseError) {
+                    Log.e("Firebase", firebaseError.getMessage());
+                }
+            };
+            family.addListenerForSingleValueEvent(listener);
+        }
+    }
+
     private void handleFamilyCreate(String familyName, String userName) {
         db = new Firebase(FIREBASE);
-
         // Creating new family with creator as first member
         final Group newFamily = new Group(familyName);
         final Member creator = new Member(userName);

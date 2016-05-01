@@ -1,6 +1,8 @@
 package com.msc.myplace;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -17,6 +19,9 @@ public class Member implements Serializable{
     public double lng;
     public long lastUpdate;
 
+    // Locations
+    public ArrayList<Location> locations = new ArrayList<>(0);
+
     public Member() {
 
     }
@@ -24,5 +29,11 @@ public class Member implements Serializable{
     public Member(String name) {
         id = UUID.randomUUID().toString();
         this.name = name;
+        locations = new ArrayList<>(0);
     }
+
+    public void addLocation(Location location) {
+        locations.add(location);
+    }
+
 }
