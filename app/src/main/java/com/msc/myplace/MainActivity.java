@@ -29,6 +29,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ public class MainActivity extends AppCompatActivity
             implements OnMapReadyCallback {
 
         private GoogleMap googleMap;
+        private Marker marker;
 
         @Override
         public void onMapReady(GoogleMap map) {
@@ -56,10 +58,11 @@ public class MainActivity extends AppCompatActivity
         }
 
         // Move camera to certain location
-        public void moveTo(double lat, double lng) {
+        public void moveTo(double lat, double lng, String text) {
+            if (marker != null) marker.remove();
             LatLng destination = new LatLng(lat, lng);
             CameraUpdate moveVector = CameraUpdateFactory.newLatLngZoom(destination, 14f);
-            googleMap.addMarker(new MarkerOptions().position(destination).title("I am here!"));
+            marker = googleMap.addMarker(new MarkerOptions().position(destination).title(text));
             googleMap.animateCamera(moveVector);
         }
     }
@@ -89,6 +92,8 @@ public class MainActivity extends AppCompatActivity
 
         // Firstly fetch family
         fetchFamily();
+        // Create listeners for user's locations
+        Client.createLocationListeners(this);
 
         // Start the daemon to get the location of this device
         startService(new Intent(this, LocationHandler.class));
@@ -128,7 +133,7 @@ public class MainActivity extends AppCompatActivity
                         @Override
                         public void onReceive(Context context, Intent intent) {
                             Member user = (Member) intent.getSerializableExtra(Client.EXTRA_USER);
-                            mapHandler.moveTo(user.lat, user.lng);
+                            mapHandler.moveTo(user.lat, user.lng, user.name);
                         }
                     };
                     registerReceiver(callback, new IntentFilter(Client.ACTION_USER_FETCHED));
@@ -160,7 +165,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onReceive(Context context, Intent intent) {
                 Member user = (Member) intent.getSerializableExtra(Client.EXTRA_USER);
-                mapHandler.moveTo(user.lat, user.lng);
+                mapHandler.moveTo(user.lat, user.lng, user.name);
                 unregisterReceiver(this);
             }
         };

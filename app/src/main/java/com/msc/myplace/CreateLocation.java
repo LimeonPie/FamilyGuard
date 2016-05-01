@@ -19,6 +19,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.firebase.client.Firebase;
+
 import java.util.ArrayList;
 
 public class CreateLocation extends AppCompatActivity {
@@ -49,7 +51,6 @@ public class CreateLocation extends AppCompatActivity {
             LayoutInflater inflater = ((Activity)context).getLayoutInflater();
             convertView = inflater.inflate(R.layout.user_row_with_checkbox, parent, false);
             TextView name = (TextView) convertView.findViewById(R.id.userNameLabel);
-            //CheckBox cb = (CheckBox) convertView.findViewById(R.id.userCheckBox);
             name.setText(items.get(position).name);
             return convertView;
         }

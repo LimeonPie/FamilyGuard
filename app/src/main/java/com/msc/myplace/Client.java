@@ -1,9 +1,12 @@
 package com.msc.myplace;
 
 import android.app.IntentService;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -26,6 +29,7 @@ public class Client extends IntentService {
     public static final String ACTION_FETCH_FAMILY = "com.msc.myplace.action.FETCH_FAMILY";
     public static final String ACTION_FETCH_USER = "com.msc.myplace.action.FETCH_USER";
     public static final String ACTION_FETCH_LOCATIONS_ALL = "com.msc.myplace.action.FETCH_LOCATIONS_ALL";
+    public static final String ACTION_CREATE_LOCATION_LISTENERS = "com.msc.myplace.action.CREATE_LOCATION_LISTENERS";
 
     public static final String ACTION_FAMILY_FETCHED = "com.msc.myplace.action.FAMILY_FETCHED";
     public static final String ACTION_USER_FETCHED = "com.msc.myplace.action.USER_FETCHED";
@@ -73,6 +77,12 @@ public class Client extends IntentService {
         intent.putExtra(EXTRA_LNG, lng);
         intent.putExtra(EXTRA_RADIUS, radius);
         intent.putExtra(EXTRA_LOCATION_ASSIGNED, userIds);
+        context.startService(intent);
+    }
+
+    public static void createLocationListeners(Context context) {
+        Intent intent = new Intent(context, Client.class);
+        intent.setAction(ACTION_CREATE_LOCATION_LISTENERS);
         context.startService(intent);
     }
 
@@ -128,6 +138,9 @@ public class Client extends IntentService {
                     double radius = intent.getDoubleExtra(EXTRA_RADIUS, 0);
                     ArrayList<String> ids = intent.getStringArrayListExtra(EXTRA_LOCATION_ASSIGNED);
                     handleLocationCreate(locationName, locLat, locLng, radius, ids);
+                    break;
+                case ACTION_CREATE_LOCATION_LISTENERS:
+                    handleLocationListenersCreate();
                     break;
                 case ACTION_JOIN_FAMILY:
                     String familyId = intent.getStringExtra(EXTRA_FAMILY_ID);
@@ -220,6 +233,39 @@ public class Client extends IntentService {
         }
     }
 
+    private void handleLocationListenersCreate() {
+        db = new Firebase(FIREBASE);
+        String familyId = readPrefs(Constants.GROUP_ID);
+        final String userId = readPrefs(Constants.USER_ID);
+        if (familyId != null && userId != null) {
+            final Firebase family = db.child("groups").child(familyId);
+            ValueEventListener listener = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    DataSnapshot members = dataSnapshot.child("members");
+                    for (DataSnapshot memberData : members.getChildren()) {
+                        Member member = memberData.getValue(Member.class);
+                        if (member.id.equals(userId)) {
+                            // Here is our guy
+                            if (member.locations != null && member.locations.size() > 0) {
+                                // Make listeners to locations
+                                for (Location location: member.locations) {
+                                    createLocationListeners(location);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(FirebaseError firebaseError) {
+                    Log.e("Firebase", firebaseError.getMessage());
+                }
+            };
+            family.addListenerForSingleValueEvent(listener);
+        }
+    }
+
     private void handleFamilyFetch() {
         db = new Firebase(FIREBASE);
         String familyId = readPrefs(Constants.GROUP_ID);
@@ -229,6 +275,7 @@ public class Client extends IntentService {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     Group group = dataSnapshot.getValue(Group.class);
+
                     Intent intent = new Intent();
                     intent.setAction(ACTION_FAMILY_FETCHED);
                     intent.putExtra(EXTRA_FAMILY, group);
@@ -328,7 +375,8 @@ public class Client extends IntentService {
                             // Update only locations
                             String key = memberData.getKey();
                             family.child("members").child(key).child("locations").setValue(member.locations);
-
+                            // And create listeners to assigned users locations
+                            createLocationListeners(created);
                             // Send a signal that new location created and added
                             Intent intent = new Intent();
                             intent.setAction(ACTION_LOCATION_CREATED);
@@ -346,8 +394,58 @@ public class Client extends IntentService {
         }
     }
 
+    private void createLocationListeners(final Location location) {
+        db = new Firebase(FIREBASE);
+        String familyId = readPrefs(Constants.GROUP_ID);
+        for (final String targetId : location.assigned) {
+            final Firebase family = db.child("groups").child(familyId);
+            ValueEventListener listener = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    DataSnapshot members = dataSnapshot.child("members");
+                    for (DataSnapshot memberData : members.getChildren()) {
+                        Member member = memberData.getValue(Member.class);
+                        if (member.id.equals(targetId)) {
+                            // This is the target
+                            String index = memberData.getKey();
+                            final Firebase target = family.child("members").child(index);
+                            // Add listeners to data change
+                            target.addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(DataSnapshot dataSnapshot) {
+                                    double targetLat = dataSnapshot.child("lat").getValue(double.class);
+                                    double targetLng = dataSnapshot.child("lng").getValue(double.class);
+                                    float[] distance = new float[1];
+                                    android.location.Location.distanceBetween(location.lat, location.lng, targetLat, targetLng, distance);
+                                    if (distance[0] <= location.radius) {
+                                        // Push notifications
+                                        final String name = dataSnapshot.child("name").getValue(String.class);
+                                        sendNotification("MyPlace", name + " enters in a " + location.name);
+                                        target.removeEventListener(this);
+                                    }
+                                }
+
+                                @Override
+                                public void onCancelled(FirebaseError firebaseError) {
+
+                                }
+                            });
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(FirebaseError firebaseError) {
+                    Log.e("Firebase", firebaseError.getMessage());
+                }
+            };
+            family.addListenerForSingleValueEvent(listener);
+        }
+    }
+
     private void handleFamilyCreate(String familyName, String userName) {
         db = new Firebase(FIREBASE);
+
         // Creating new family with creator as first member
         final Group newFamily = new Group(familyName);
         final Member creator = new Member(userName);
@@ -355,7 +453,6 @@ public class Client extends IntentService {
 
         // Pushing to server
         Firebase familyRef = db.child("groups").child(newFamily.id);
-        familyRef.setValue(newFamily);
         familyRef.setValue(newFamily, new Firebase.CompletionListener() {
             @Override
             public void onComplete(FirebaseError firebaseError, Firebase firebase) {
@@ -382,6 +479,18 @@ public class Client extends IntentService {
     private String readPrefs(String key) {
         SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
         return settings.getString(key, null);
+    }
+
+    private void sendNotification(String title, String text) {
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this);
+        mBuilder.setSmallIcon(R.mipmap.ic_launcher);
+        mBuilder.setContentTitle(title);
+        mBuilder.setContentText(text);
+        Intent resultIntent = new Intent(this, MainActivity.class);
+        PendingIntent resultPendingIntent = PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mBuilder.setContentIntent(resultPendingIntent);
+        NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        mNotifyMgr.notify(1, mBuilder.build());
     }
 
     private void openMainActivity() {

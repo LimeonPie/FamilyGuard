@@ -6,8 +6,7 @@
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp">
+        android:layout_height="wrap_content">
 
         <CheckBox
             android:id="@+id/userCheckBox"
@@ -21,12 +20,12 @@
         <TextView
             android:id="@+id/userNameLabel"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="fill_parent"
             android:text="UserName"
-            android:textColor="@color/colorPrimaryText"
             android:layout_marginLeft="10dp"
-            android:theme="@style/Base.TextAppearance.AppCompat.Medium"
-            android:gravity="center_vertical" />
+            android:textIsSelectable="false"
+            android:textSize="22sp"
+            android:singleLine="true" />
     </LinearLayout>
 
 </LinearLayout>
