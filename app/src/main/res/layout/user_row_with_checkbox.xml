@@ -24,7 +24,9 @@
             android:layout_height="wrap_content"
             android:text="UserName"
             android:textColor="@color/colorPrimaryText"
-            android:layout_marginLeft="10dp" />
+            android:layout_marginLeft="10dp"
+            android:theme="@style/Base.TextAppearance.AppCompat.Medium"
+            android:gravity="center_vertical" />
     </LinearLayout>
 
 </LinearLayout>

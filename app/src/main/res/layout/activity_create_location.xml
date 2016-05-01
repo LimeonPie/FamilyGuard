@@ -9,93 +9,140 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.msc.myplace.CreateLocation">
 
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/txt_location_name"
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignStart="@+id/txt_lat" />
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/btn_create_location">
 
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:inputType="numberDecimal"
-        android:ems="10"
-        android:id="@+id/txt_lat"
-        android:layout_below="@+id/txt_location_name"
-        android:layout_alignParentEnd="true" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Latitude"
-        android:id="@+id/lbl_lat"
-        android:layout_alignTop="@+id/txt_lat"
-        android:layout_alignParentStart="true"
-        android:layout_alignBottom="@+id/txt_lat" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/name"
+                android:id="@+id/lbl_name"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
+                android:layout_alignBottom="@+id/txt_location_name"
+                android:layout_toStartOf="@+id/btn_create_location" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Longitude"
-        android:id="@+id/lbl_lon"
-        android:layout_below="@+id/txt_lat"
-        android:layout_alignParentStart="true" />
+            <EditText
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/txt_location_name"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:layout_alignStart="@+id/txt_lat"
+                android:layout_marginLeft="10dp" />
+        </LinearLayout>
 
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:inputType="numberDecimal"
-        android:ems="10"
-        android:id="@+id/txt_lon"
-        android:layout_alignTop="@+id/lbl_lon"
-        android:layout_alignStart="@+id/txt_lat" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Radius"
-        android:id="@+id/lbl_radius"
-        android:layout_below="@+id/txt_lon"
-        android:layout_alignParentStart="true" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/latitude"
+                android:id="@+id/lbl_lat"
+                android:layout_alignTop="@+id/txt_lat"
+                android:layout_alignParentStart="true"
+                android:layout_alignBottom="@+id/txt_lat" />
 
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:inputType="numberDecimal"
-        android:ems="10"
-        android:id="@+id/txt_radius"
-        android:layout_below="@+id/txt_lon"
-        android:layout_alignStart="@+id/txt_lon" />
+            <EditText
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:ems="10"
+                android:id="@+id/txt_lat"
+                android:layout_marginLeft="10dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/longitude"
+                android:id="@+id/lbl_lon"
+                android:layout_below="@+id/txt_lat"
+                android:layout_alignParentStart="true" />
+
+            <EditText
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:ems="10"
+                android:id="@+id/txt_lon"
+                android:layout_alignTop="@+id/lbl_lon"
+                android:layout_alignStart="@+id/txt_lat"
+                android:layout_marginLeft="10dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/radius"
+                android:id="@+id/lbl_radius"
+                android:layout_below="@+id/txt_lon"
+                android:layout_alignParentStart="true" />
+
+            <EditText
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:ems="10"
+                android:id="@+id/txt_radius"
+                android:layout_below="@+id/txt_lon"
+                android:layout_alignStart="@+id/txt_lon"
+                android:layout_marginLeft="10dp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/check_members"
+            android:id="@+id/textView"
+            android:layout_marginTop="5dp" />
+
+        <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/assignedListView"
+            android:layout_below="@+id/txt_radius"
+            android:layout_alignParentStart="true"
+            android:layout_above="@+id/btn_create_location" />
+
+    </LinearLayout>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add Location"
+        android:text="@string/save"
         android:id="@+id/btn_create_location"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Name"
-        android:id="@+id/lbl_name"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignBottom="@+id/txt_location_name"
-        android:layout_toStartOf="@+id/btn_create_location" />
-
-    <ListView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/assignedListView"
-        android:layout_below="@+id/txt_radius"
-        android:layout_alignParentStart="true"
-        android:layout_above="@+id/btn_create_location" />
 </RelativeLayout>
