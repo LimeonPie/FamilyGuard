@@ -47,11 +47,18 @@
         <activity
             android:name=".LocationsList"
             android:label="@string/locations" />
+
         <activity
             android:name=".CreateLocation"
             android:label="@string/location_create" />
-        <activity android:name=".FamilyList" />
-        <activity android:name=".Settings"></activity>
+
+        <activity
+            android:name=".FamilyList"
+            android:label="@string/family"/>
+
+        <activity
+            android:name=".Settings"
+            android:label="@string/settings"/>
     </application>
 
 </manifest>

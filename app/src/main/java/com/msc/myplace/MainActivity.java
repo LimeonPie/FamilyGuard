@@ -220,13 +220,13 @@ public class MainActivity extends AppCompatActivity
 
         switch (id) {
             case R.id.familyMenuItem:
-                startActivity( new Intent(this, FamilyList.class) );
+                startActivity(new Intent(this, FamilyList.class));
                 break;
             case R.id.locationsMenuItem:
-                startActivity( new Intent(this, LocationsList.class) );
+                startActivity(new Intent(this, LocationsList.class));
                 break;
             case R.id.settingsMenuItem:
-                startActivity( new Intent(this, Settings.class) );
+                startActivity(new Intent(this, Settings.class));
                 break;
             default:
                 break;
