@@ -29,10 +29,11 @@
 
         <ListView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:id="@+id/list_locations"
             android:layout_weight="0.81"
-            android:choiceMode="none" />
+            android:choiceMode="none"
+            android:divider="#00000000" />
 
     </LinearLayout>
 

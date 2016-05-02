@@ -128,12 +128,13 @@
             android:layout_marginTop="5dp" />
 
         <ListView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:id="@+id/assignedListView"
             android:layout_below="@+id/txt_radius"
             android:layout_alignParentStart="true"
-            android:layout_above="@+id/btn_create_location" />
+            android:layout_above="@+id/btn_create_location"
+            android:divider="#00000000" />
 
     </LinearLayout>
 
