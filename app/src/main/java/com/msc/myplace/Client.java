@@ -324,25 +324,21 @@ public class Client extends IntentService {
 
     private void handleFamilyJoin(final String familyId, final String userName) {
         db = new Firebase(FIREBASE);
-        final Firebase groups = db.child("groups");
+        final Firebase family = db.child("groups").child(familyId);
         ValueEventListener listener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot groupSnapshot: dataSnapshot.getChildren()) {
-                    Group group = groupSnapshot.getValue(Group.class);
-                    if (group.id.equals(familyId)) {
-                        // Adding new user
-                        Member user = new Member(userName);
-                        group.addMember(user);
-                        groups.child(familyId).child("members").setValue(group.members);
+                Group group = dataSnapshot.getValue(Group.class);
+                // Adding new user
+                Member user = new Member(userName);
+                group.addMember(user);
+                family.child("members").setValue(group.members);
 
-                        Toast.makeText(getApplicationContext(), "Joined a Family", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Joined a Family", Toast.LENGTH_SHORT).show();
 
-                        writePrefs(Constants.GROUP_ID, group.id);
-                        writePrefs(Constants.USER_ID, user.id);
-                        openMainActivity();
-                    }
-                }
+                writePrefs(Constants.GROUP_ID, group.id);
+                writePrefs(Constants.USER_ID, user.id);
+                openMainActivity();
             }
 
             @Override
@@ -351,7 +347,7 @@ public class Client extends IntentService {
             }
         };
 
-        groups.addListenerForSingleValueEvent(listener);
+        family.addListenerForSingleValueEvent(listener);
     }
 
     private void handleLocationCreate(final String locationName, final double lat, final double lng, final double radius, final ArrayList<String> userIds) {
@@ -417,15 +413,12 @@ public class Client extends IntentService {
                             target.addValueEventListener(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
-                                    // Read/Write to add statuses if they not exist
-                                    Member pawn = dataSnapshot.getValue(Member.class);
-                                    target.setValue(pawn);
                                     double targetLat = dataSnapshot.child("lat").getValue(double.class);
                                     double targetLng = dataSnapshot.child("lng").getValue(double.class);
                                     float[] distance = new float[1];
                                     android.location.Location.distanceBetween(location.lat, location.lng, targetLat, targetLng, distance);
                                     HashMap<String, Boolean> statuses = dataSnapshot.child("statuses").getValue(HashMap.class);
-                                    if (statuses == null) statuses = new HashMap<String, Boolean>(0);
+                                    if (statuses == null) statuses = new HashMap<>(0);
                                     // If we in area
                                     if (distance[0] <= location.radius) {
                                         // If we have key, check it
@@ -466,9 +459,6 @@ public class Client extends IntentService {
                                             // If not, create it
                                             statuses.put(location.id, false);
                                             target.child("statuses").setValue(statuses);
-                                            // Push notifications
-                                            final String name = dataSnapshot.child("name").getValue(String.class);
-                                            sendNotification("MyPlace", name + " leaves a " + location.name);
                                         }
                                     }
                                 }
