@@ -16,6 +16,7 @@ import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Client extends IntentService {
 
@@ -416,15 +417,59 @@ public class Client extends IntentService {
                             target.addValueEventListener(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
+                                    // Read/Write to add statuses if they not exist
+                                    Member pawn = dataSnapshot.getValue(Member.class);
+                                    target.setValue(pawn);
                                     double targetLat = dataSnapshot.child("lat").getValue(double.class);
                                     double targetLng = dataSnapshot.child("lng").getValue(double.class);
                                     float[] distance = new float[1];
                                     android.location.Location.distanceBetween(location.lat, location.lng, targetLat, targetLng, distance);
+                                    HashMap<String, Boolean> statuses = dataSnapshot.child("statuses").getValue(HashMap.class);
+                                    if (statuses == null) statuses = new HashMap<String, Boolean>(0);
+                                    // If we in area
                                     if (distance[0] <= location.radius) {
-                                        // Push notifications
-                                        final String name = dataSnapshot.child("name").getValue(String.class);
-                                        sendNotification("MyPlace", name + " enters in a " + location.name);
-                                        target.removeEventListener(this);
+                                        // If we have key, check it
+                                        if (statuses.containsKey(location.id)) {
+                                            Boolean status = statuses.get(location.id);
+                                            if (status == false) {
+                                                // Target gets inside
+                                                statuses.put(location.id, !status);
+                                                target.child("statuses").setValue(statuses);
+                                                // Push notifications
+                                                final String name = dataSnapshot.child("name").getValue(String.class);
+                                                sendNotification("MyPlace", name + " enters in a " + location.name);
+                                            }
+                                        }
+                                        else {
+                                            // If not, create it
+                                            statuses.put(location.id, true);
+                                            target.child("statuses").setValue(statuses);
+                                            // Push notifications
+                                            final String name = dataSnapshot.child("name").getValue(String.class);
+                                            sendNotification("MyPlace", name + " enters in a " + location.name);
+                                        }
+
+                                    }
+                                    else {
+                                        if (statuses.containsKey(location.id)) {
+                                            Boolean status = statuses.get(location.id);
+                                            if (status == true) {
+                                                // Target gets out
+                                                statuses.put(location.id, !status);
+                                                target.child("statuses").setValue(statuses);
+                                                // Push notifications
+                                                final String name = dataSnapshot.child("name").getValue(String.class);
+                                                sendNotification("MyPlace", name + " leaves a " + location.name);
+                                            }
+                                        }
+                                        else {
+                                            // If not, create it
+                                            statuses.put(location.id, false);
+                                            target.child("statuses").setValue(statuses);
+                                            // Push notifications
+                                            final String name = dataSnapshot.child("name").getValue(String.class);
+                                            sendNotification("MyPlace", name + " leaves a " + location.name);
+                                        }
                                     }
                                 }
 

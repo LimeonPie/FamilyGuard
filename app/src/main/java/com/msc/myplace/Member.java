@@ -2,6 +2,7 @@ package com.msc.myplace;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +22,7 @@ public class Member implements Serializable{
 
     // Locations
     public ArrayList<Location> locations = new ArrayList<>(0);
+    public HashMap<String, Boolean> statuses = new HashMap<>(0);
 
     public Member() {
 
@@ -30,6 +32,7 @@ public class Member implements Serializable{
         id = UUID.randomUUID().toString();
         this.name = name;
         locations = new ArrayList<>(0);
+        statuses = new HashMap<>(0);
     }
 
     public void addLocation(Location location) {
