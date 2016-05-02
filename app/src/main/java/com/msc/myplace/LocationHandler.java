@@ -2,6 +2,7 @@ package com.msc.myplace;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -41,7 +42,6 @@ public class LocationHandler extends IntentService implements
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("LOCATION", "starting...?");
         this.google_api_client = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -100,6 +100,10 @@ public class LocationHandler extends IntentService implements
 
     // Handle the newly received location
     private void handleNewLocation(Location location) {
-        Client.updateSelf(this, location.getLatitude(), location.getLongitude());
+        SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
+        Boolean location_sharing_enabled = settings.getBoolean(Constants.LOCATION_SHARING, true);
+        if(location_sharing_enabled) {
+            Client.updateSelf(this, location.getLatitude(), location.getLongitude());
+        }
     }
 }

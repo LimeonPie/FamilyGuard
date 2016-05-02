@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity
             fab.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Toast.makeText(getApplicationContext(), "Tap on " + name, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Viewing " + name, Toast.LENGTH_SHORT).show();
                     BroadcastReceiver callback = new BroadcastReceiver() {
                         @Override
                         public void onReceive(Context context, Intent intent) {
